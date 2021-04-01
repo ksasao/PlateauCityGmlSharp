@@ -56,11 +56,17 @@ namespace PlateauCityGml
             Triangles = tris.ToArray();
             Vertices = vtx.ToArray();
             UV = uvs.ToArray();
-            TextureFile = textureFile;
+            string current = Path.GetDirectoryName(building.GmlPath);
+            TextureFile = Path.Combine(current,textureFile);
         }
         public void SaveAsObj(string filename)
         {
             model.Clear();
+
+            string fullpath = Path.GetFullPath(filename);
+            string current = Path.GetDirectoryName(fullpath);
+            Directory.CreateDirectory(current);
+
             string mtlName = Path.GetFileNameWithoutExtension(filename) + ".mtl";
             model.Add($"mtllib {Path.GetFileName(mtlName)}");
             model.Add("g model");
@@ -79,9 +85,7 @@ namespace PlateauCityGml
             // 法線ベクトルを生成
             for(int i=0; i < Triangles.Length; i++)
             {
-                Triangle t = Triangles[i];
-                Vector3 n = Vector3.Cross(t.P2.Value - t.P1.Value, t.P0.Value - t.P1.Value);
-                n = Vector3.Normalize(n);
+                Vector3 n = Triangles[i].Normal;
                 model.Add($"vn {n.X} {n.Y} {n.Z}");
             }
             // 面を生成(順序を要確認)
@@ -91,9 +95,9 @@ namespace PlateauCityGml
                 Triangle t = Triangles[i];
                 if (t.HasTexture)
                 {
-                    model.Add($"f {t.P0.Index + 1}/{t.P0.Index + 1}/{i + 1} "
+                    model.Add($"f {t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1} "
                         + $"{t.P1.Index + 1}/{t.P1.Index + 1}/{i + 1} "
-                        + $"{t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1}");
+                        + $"{t.P0.Index + 1}/{t.P0.Index + 1}/{i + 1}");
                 }
                 else
                 {
@@ -103,7 +107,12 @@ namespace PlateauCityGml
                 }
             }
 
-            File.WriteAllLines(filename, model.ToArray());
+            // .objファイル書き出し
+            File.WriteAllLines(fullpath, model.ToArray());
+
+            // .obj ファイルのローダー互換性のためテクスチャを .mtl と同じディレクトリにコピー 
+            string textureLocal = Path.GetFileName(TextureFile);
+            File.Copy(TextureFile, Path.Combine(current,textureLocal), true);
 
             model.Clear();
             model.Add("newmtl Material");
@@ -115,8 +124,10 @@ namespace PlateauCityGml
             model.Add("Tr 0.000000");
             model.Add("Pr 0.333333");
             model.Add("Pm 0.080000");
-            model.Add($"map_Kd {TextureFile}");
-            File.WriteAllLines(mtlName, model.ToArray());
+            model.Add($"map_Kd {textureLocal}");
+
+            // .mtl ファイル書き出し
+            File.WriteAllLines(Path.Combine(current,mtlName), model.ToArray());
         }
     }
 }

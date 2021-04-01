@@ -13,5 +13,6 @@ namespace PlateauCityGml
         public Surface[] Surfaces { get; set; }
         public Position LowerCorner { get; set; }
         public Position UpperCorner { get; set; }
+        public string GmlPath { get; set; }
     }
 }

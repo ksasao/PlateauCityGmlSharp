@@ -15,6 +15,7 @@ namespace PlateauCityGml
         public Building[] GetBuildings(string gmlPath)
         {
             const string bldgBuilding = "bldg:Building";
+            string fullPath = Path.GetFullPath(gmlPath);
             List<Building> buildings = new List<Building>();
 
             XmlReaderSettings settings = new XmlReaderSettings();
@@ -32,6 +33,7 @@ namespace PlateauCityGml
                             if(reader.Name == bldgBuilding)
                             {
                                 building = CreateBuilding(reader);
+                                building.GmlPath = fullPath;
                                 buildings.Add(building);
                             }
                             if(reader.Name == "app:appearanceMember")
