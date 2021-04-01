@@ -81,11 +81,7 @@ namespace PlateauCityGml
             {
                 Triangle t = Triangles[i];
                 Vector3 n = Vector3.Cross(t.P2.Value - t.P1.Value, t.P0.Value - t.P1.Value);
-                //n = Vector3.Normalize(n);
-                if(n.X == 0 && n.Y == 0)
-                {
-
-                }
+                n = Vector3.Normalize(n);
                 model.Add($"vn {n.X} {n.Y} {n.Z}");
             }
             // 面を生成(順序を要確認)
@@ -97,13 +93,13 @@ namespace PlateauCityGml
                 {
                     model.Add($"f {t.P0.Index + 1}/{t.P0.Index + 1}/{i + 1} "
                         + $"{t.P1.Index + 1}/{t.P1.Index + 1}/{i + 1} "
-                        + $"{t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1} ");
+                        + $"{t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1}");
                 }
                 else
                 {
                     model.Add($"f {t.P0.Index + 1}//{i + 1} "
                         + $"{t.P1.Index + 1}//{i + 1} "
-                        + $"{t.P2.Index + 1}//{i + 1} ");
+                        + $"{t.P2.Index + 1}//{i + 1}");
                 }
             }
 
