@@ -18,7 +18,6 @@ namespace CityGMLTest
             if (args.Length < 1)
             {
                 Console.WriteLine("Drag & Drop a .gml file.");
-                Console.ReadKey();
             }
             else
             {
@@ -32,6 +31,7 @@ namespace CityGMLTest
                     Console.WriteLine(ex.Message);
                 }
             }
+            Console.WriteLine("Press any key.");
             Console.ReadKey();
         }
 
