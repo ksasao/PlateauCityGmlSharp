@@ -16,7 +16,7 @@ namespace PlateauCityGml
         public static Position[] ParseString(string positionString)
         {
             string[] items = positionString.Split(' ');
-            int len = items.Length / 3;
+            int len = items.Length / 3 - 1;  // 始点と終点は同じ値なので終点を無視
             Position[] list = new Position[len];
             for (int i = 0; i < len; i++)
             {

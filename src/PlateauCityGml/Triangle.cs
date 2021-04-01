@@ -11,5 +11,7 @@ namespace PlateauCityGml
         public Vertex P0 { get; set; }
         public Vertex P1 { get; set; }
         public Vertex P2 { get; set; }
+
+        public bool HasTexture { get; set; } = false;
     }
 }

@@ -166,9 +166,9 @@ namespace PlateauCityGml
         private Vector2[] ConvertToUV(string uvText)
         {
             string[] items = uvText.Split(' ');
-            int len = items.Length / 2;
+            int len = items.Length / 2 - 1; // 元の点列は始点と終点が同じ値なので終点を無視
             Vector2[] list = new Vector2[len];
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < len; i++) 
             {
                 list[i] = new Vector2
                 {

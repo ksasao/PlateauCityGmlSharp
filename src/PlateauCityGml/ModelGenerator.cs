@@ -12,46 +12,50 @@ namespace PlateauCityGml
     {
         public Triangle[] Triangles { get; private set; }
         public Vector2[] UV { get; private set; }
-        public Vector3[] Vertices { get; private set; }
+        public Vertex[] Vertices { get; private set; }
         public string TextureFile { get; private set; }
 
         private List<string> model = new List<string>();
-
+        private Building _building;
         public ModelGenerator(Building building)
         {
+            _building = building;
             List<Triangle> tris = new List<Triangle>();
             List<Vector2> uvs = new List<Vector2>();
             List<Vertex> vtx = new List<Vertex>();
             Position origin = building.LowerCorner;
-
             int count = 0;
             int offset = 0;
             string textureFile = null;
             for (int i = 0; i < building.Surfaces.Length; i++, count++)
             {
-                if (building.Surfaces[i].Positions != null && building.Surfaces[i].UVs != null)
+                if (building.Surfaces[i].Positions != null)
                 {
                     Triangulator tr = new Triangulator();
-                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(building.Surfaces[i].Positions, offset, origin);
+                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(building.Surfaces[i].Positions, building.Surfaces[i].UVs, offset, origin);
                     vtx.AddRange(vertex);
                     tris.AddRange(triangle);
                     offset += vertex.Length;
-
-                    uvs.AddRange(building.Surfaces[i].UVs);
-                    if(building.Surfaces[i].TextureFile != null)
+                    if(building.Surfaces[i].UVs != null)
+                    {
+                        uvs.AddRange(building.Surfaces[i].UVs);
+                    }
+                    else
+                    {
+                        for(int j=0; j < vertex.Length; j++)
+                        {
+                            uvs.Add(new Vector2(-1, -1));
+                        }
+                    }
+                    if (building.Surfaces[i].TextureFile != null)
                     {
                         textureFile = building.Surfaces[i].TextureFile;
                     }
                 }
             }
             Triangles = tris.ToArray();
+            Vertices = vtx.ToArray();
             UV = uvs.ToArray();
-            TextureFile = textureFile;
-        }
-        public ModelGenerator(Triangle[] triangles, Vector2[] uv, string textureFile)
-        {
-            Triangles = triangles;
-            UV = uv;
             TextureFile = textureFile;
         }
         public void SaveAsObj(string filename)
@@ -61,37 +65,10 @@ namespace PlateauCityGml
             model.Add($"mtllib {Path.GetFileName(mtlName)}");
             model.Add("g model");
 
-            // 頂点リストを生成
-            Dictionary<int, Vector3> vertList = new Dictionary<int, Vector3>();
-            for(int i=0; i<Triangles.Length; i++)
+            for(int i=0; i < Vertices.Length; i++)
             {
-                if (!vertList.ContainsKey(Triangles[i].P0.Index))
-                {
-                    vertList.Add(Triangles[i].P0.Index, Triangles[i].P0.Value);
-                }
-                if (!vertList.ContainsKey(Triangles[i].P1.Index))
-                {
-                    vertList.Add(Triangles[i].P1.Index, Triangles[i].P1.Value);
-                }
-                if (!vertList.ContainsKey(Triangles[i].P2.Index))
-                {
-                    vertList.Add(Triangles[i].P2.Index, Triangles[i].P2.Value);
-                }
-            }
-            var len = vertList.Max(c => c.Key) + 1;
-            Vector3[] vlist = new Vector3[len];
-            for(int i=0; i < len; i++)
-            {
-                if (vertList.ContainsKey(i))
-                {
-                    var v = vertList[i];
-                    vlist[i] = new Vector3(v.X, v.Y, v.Z);
-                }
-                else
-                {
-                    vlist[i] = new Vector3();
-                }
-                model.Add($"v {vlist[i].X} {vlist[i].Y} {vlist[i].Z}");
+                var v = Vertices[i].Value;
+                model.Add($"v {v.X} {v.Y} {v.Z}");
             }
             // UV を生成
             for(int i=0; i<UV.Length; i++)
@@ -104,7 +81,11 @@ namespace PlateauCityGml
             {
                 Triangle t = Triangles[i];
                 Vector3 n = Vector3.Cross(t.P2.Value - t.P1.Value, t.P0.Value - t.P1.Value);
-                n = Vector3.Normalize(n);
+                //n = Vector3.Normalize(n);
+                if(n.X == 0 && n.Y == 0)
+                {
+
+                }
                 model.Add($"vn {n.X} {n.Y} {n.Z}");
             }
             // 面を生成(順序を要確認)
@@ -112,12 +93,18 @@ namespace PlateauCityGml
             for(int i=0; i < Triangles.Length; i++)
             {
                 Triangle t = Triangles[i];
-                model.Add($"f {t.P0.Index + 1}/{t.P0.Index + 1}/{i + 1} "
-                    + $"{t.P1.Index + 1}/{t.P1.Index + 1}/{i + 1} "
-                    + $"{t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1} ");
-                //            model.Add($"f {t.P2.Index + 1}/{t.P2.Index + 1} "
-                //+ $"{t.P1.Index + 1}/{t.P1.Index + 1} "
-                //+ $"{t.P0.Index + 1}/{t.P0.Index + 1}");
+                if (t.HasTexture)
+                {
+                    model.Add($"f {t.P0.Index + 1}/{t.P0.Index + 1}/{i + 1} "
+                        + $"{t.P1.Index + 1}/{t.P1.Index + 1}/{i + 1} "
+                        + $"{t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1} ");
+                }
+                else
+                {
+                    model.Add($"f {t.P0.Index + 1}//{i + 1} "
+                        + $"{t.P1.Index + 1}//{i + 1} "
+                        + $"{t.P2.Index + 1}//{i + 1} ");
+                }
             }
 
             File.WriteAllLines(filename, model.ToArray());
