@@ -46,14 +46,14 @@ namespace CityGMLTest
             for (int i = 0; i < buildings.Length; i++)
             {
                 var b = buildings[i];
-                string status = b.Surfaces == null ? "No LOD2 Polygon" : $"{b.Surfaces?.Length} polygons";
+                string status = b.LOD2Solid == null ? "No LOD2 Polygon" : $"{b.LOD2Solid?.Length} polygons";
                 Console.WriteLine($"{b.Id}\t{b.Name}\t{status}");
             }
 
             for (int i = 0; i < buildings.Length; i++)
             {
                 Building building = buildings[i];
-                if (building.Surfaces != null)
+                if (building.LOD2Solid != null)
                 {
                     ModelGenerator mg = new ModelGenerator(building);
                     mg.SaveAsObj(Path.Combine(outputPath, building.Id + ".obj"));

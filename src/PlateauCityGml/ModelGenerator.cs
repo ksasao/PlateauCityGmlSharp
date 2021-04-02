@@ -27,18 +27,18 @@ namespace PlateauCityGml
             int count = 0;
             int offset = 0;
             string textureFile = null;
-            for (int i = 0; i < building.Surfaces.Length; i++, count++)
+            for (int i = 0; i < building.LOD2Solid.Length; i++, count++)
             {
-                if (building.Surfaces[i].Positions != null)
+                if (building.LOD2Solid[i].Positions != null)
                 {
                     Triangulator tr = new Triangulator();
-                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(building.Surfaces[i].Positions, building.Surfaces[i].UVs, offset, origin);
+                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(building.LOD2Solid[i].Positions, building.LOD2Solid[i].UVs, offset, origin);
                     vtx.AddRange(vertex);
                     tris.AddRange(triangle);
                     offset += vertex.Length;
-                    if(building.Surfaces[i].UVs != null)
+                    if(building.LOD2Solid[i].UVs != null)
                     {
-                        uvs.AddRange(building.Surfaces[i].UVs);
+                        uvs.AddRange(building.LOD2Solid[i].UVs);
                     }
                     else
                     {
@@ -47,9 +47,9 @@ namespace PlateauCityGml
                             uvs.Add(new Vector2(-1, -1));
                         }
                     }
-                    if (building.Surfaces[i].TextureFile != null)
+                    if (building.LOD2Solid[i].TextureFile != null)
                     {
-                        textureFile = building.Surfaces[i].TextureFile;
+                        textureFile = building.LOD2Solid[i].TextureFile;
                     }
                 }
             }

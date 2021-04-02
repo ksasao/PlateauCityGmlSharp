@@ -71,7 +71,19 @@ namespace PlateauCityGml
                 {
                     building.Name = node.FirstChild.Value;
                 }
-                if(node.Name== "bldg:lod2Solid")
+                if (node.Name == "bldg:measuredHeight")
+                {
+                    building.Height = Convert.ToSingle(node.FirstChild.Value);
+                }
+                if(node.Name== "bldg:lod0RoofEdge")
+                {
+                    building.LOD0RoofEdge = GetLOD0Surface(node);
+                }
+                if (node.Name == "bldg:lod1Solid")
+                {
+                    building.LOD1Solid = GetLOD1Surface(node);
+                }
+                if (node.Name== "bldg:lod2Solid")
                 {
                     surfaceDic = GetPolyList(node);
                 }
@@ -83,14 +95,14 @@ namespace PlateauCityGml
             // LOD2が指定されていない場合は null
             if(surfaceDic != null)
             {
-                building.Surfaces = surfaceDic.Values.ToArray();
+                building.LOD2Solid = surfaceDic.Values.ToArray();
                 double lLat = double.MaxValue;
                 double lLon = double.MaxValue;
                 double lAlt = double.MaxValue;
                 double uLat = double.MinValue;
                 double uLon = double.MinValue;
                 double uAlt = double.MinValue;
-                foreach (var s in building.Surfaces)
+                foreach (var s in building.LOD2Solid)
                 {
                     if (s.LowerCorner.Latitude  < lLat) lLat = s.LowerCorner.Latitude;
                     if (s.LowerCorner.Longitude < lLon) lLon = s.LowerCorner.Longitude;
@@ -105,6 +117,30 @@ namespace PlateauCityGml
 
             return building;
         }
+        public Surface GetLOD0Surface(XmlNode node)
+        {
+            var s = node.FirstChild.FirstChild.FirstChild.FirstChild.FirstChild.FirstChild.FirstChild;
+            Surface surface = new Surface();
+            string posStr = s.Value;
+            surface.SetPositions(Position.ParseString(posStr));
+            return surface;
+        }
+
+        public Surface[] GetLOD1Surface(XmlNode node)
+        {
+            List<Surface> surfaces = new List<Surface>();
+            // 多角形の名前のリストを取得
+            XmlNodeList list = node.FirstChild.FirstChild.FirstChild.ChildNodes;
+            for (int i = 0; i < list.Count; i++)
+            {
+                Surface s = new Surface();
+                string posStr = list[i].FirstChild.FirstChild.FirstChild.FirstChild.FirstChild.Value;
+                s.SetPositions(Position.ParseString(posStr));
+                surfaces.Add(s);
+            }
+            return surfaces.ToArray();
+        }
+
         private void UpdateSurfaceDic(XmlNode node, Dictionary<string, Surface> polyDic)
         {
             // 名前に対応する頂点リストを取得する
@@ -184,18 +220,18 @@ namespace PlateauCityGml
         {
             foreach(var b in buildings)
             {
-                if(b.Surfaces == null)
+                if(b.LOD2Solid == null)
                 {
                     continue;
                 }
                 var data = new List<(int Index, Vector2[] UV)>();
-                for (int i=0; i<b.Surfaces.Length; i++)
+                for (int i=0; i<b.LOD2Solid.Length; i++)
                 {
                     // あるビルのポリゴンのIDに一致するテクスチャがあったら割り当てる
-                    if (map.ContainsKey(b.Surfaces[i].Id))
+                    if (map.ContainsKey(b.LOD2Solid[i].Id))
                     {
-                        var d = map[b.Surfaces[i].Id];
-                        b.Surfaces[i].UVs = d.UV;
+                        var d = map[b.LOD2Solid[i].Id];
+                        b.LOD2Solid[i].UVs = d.UV;
                         data.Add(d);
                     }
                 }
@@ -212,10 +248,10 @@ namespace PlateauCityGml
                 {
                     for (int i = 0; i < data.Count; i++)
                     {
-                        string key = b.Surfaces[i].Id;
+                        string key = b.LOD2Solid[i].Id;
                         if (map.ContainsKey(key))
                         {
-                            b.Surfaces[i].TextureFile = textureFiles[data[0].Index];
+                            b.LOD2Solid[i].TextureFile = textureFiles[data[0].Index];
                         }
                     }
                 }
