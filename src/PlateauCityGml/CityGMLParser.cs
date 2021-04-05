@@ -96,26 +96,37 @@ namespace PlateauCityGml
             if(surfaceDic != null)
             {
                 building.LOD2Solid = surfaceDic.Values.ToArray();
-                double lLat = double.MaxValue;
-                double lLon = double.MaxValue;
-                double lAlt = double.MaxValue;
-                double uLat = double.MinValue;
-                double uLon = double.MinValue;
-                double uAlt = double.MinValue;
-                foreach (var s in building.LOD2Solid)
-                {
-                    if (s.LowerCorner.Latitude  < lLat) lLat = s.LowerCorner.Latitude;
-                    if (s.LowerCorner.Longitude < lLon) lLon = s.LowerCorner.Longitude;
-                    if (s.LowerCorner.Altitude  < lAlt) lAlt = s.LowerCorner.Altitude;
-                    if (s.UpperCorner.Latitude  > uLat) uLat = s.UpperCorner.Latitude;
-                    if (s.UpperCorner.Longitude > uLon) uLon = s.UpperCorner.Longitude;
-                    if (s.UpperCorner.Altitude  > uAlt) uAlt = s.UpperCorner.Altitude;
-                }
-                building.LowerCorner = new Position(lLat, lLon, lAlt);
-                building.UpperCorner = new Position(uLat, uLon, uAlt);
+                (Position lower, Position upper) = GetCorner(building.LOD2Solid);
+                building.LowerCorner = lower;
+                building.UpperCorner = upper;
+            }
+            if(building.LOD1Solid != null && building.LOD2Solid == null)
+            {
+                (Position lower, Position upper) = GetCorner(building.LOD1Solid);
+                building.LowerCorner = lower;
+                building.UpperCorner = upper;
             }
 
             return building;
+        }
+        private (Position Lower, Position Upper) GetCorner(Surface[] surfaces)
+        {
+            double lLat = double.MaxValue;
+            double lLon = double.MaxValue;
+            double lAlt = double.MaxValue;
+            double uLat = double.MinValue;
+            double uLon = double.MinValue;
+            double uAlt = double.MinValue;
+            foreach (var s in surfaces)
+            {
+                if (s.LowerCorner.Latitude < lLat) lLat = s.LowerCorner.Latitude;
+                if (s.LowerCorner.Longitude < lLon) lLon = s.LowerCorner.Longitude;
+                if (s.LowerCorner.Altitude < lAlt) lAlt = s.LowerCorner.Altitude;
+                if (s.UpperCorner.Latitude > uLat) uLat = s.UpperCorner.Latitude;
+                if (s.UpperCorner.Longitude > uLon) uLon = s.UpperCorner.Longitude;
+                if (s.UpperCorner.Altitude > uAlt) uAlt = s.UpperCorner.Altitude;
+            }
+            return (new Position(lLat, lLon, lAlt), new Position(uLat, uLon, uAlt));
         }
         public Surface GetLOD0Surface(XmlNode node)
         {

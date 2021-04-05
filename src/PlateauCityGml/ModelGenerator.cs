@@ -27,18 +27,19 @@ namespace PlateauCityGml
             int count = 0;
             int offset = 0;
             string textureFile = null;
-            for (int i = 0; i < building.LOD2Solid.Length; i++, count++)
+            Surface[] surfaces = building.LOD2Solid;
+            for (int i = 0; i < surfaces.Length; i++, count++)
             {
-                if (building.LOD2Solid[i].Positions != null)
+                if (surfaces[i].Positions != null)
                 {
                     Triangulator tr = new Triangulator();
-                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(building.LOD2Solid[i].Positions, building.LOD2Solid[i].UVs, offset, origin);
+                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(surfaces[i].Positions, surfaces[i].UVs, offset, origin);
                     vtx.AddRange(vertex);
                     tris.AddRange(triangle);
                     offset += vertex.Length;
-                    if(building.LOD2Solid[i].UVs != null)
+                    if(surfaces[i].UVs != null)
                     {
-                        uvs.AddRange(building.LOD2Solid[i].UVs);
+                        uvs.AddRange(surfaces[i].UVs);
                     }
                     else
                     {
@@ -47,9 +48,9 @@ namespace PlateauCityGml
                             uvs.Add(new Vector2(-1, -1));
                         }
                     }
-                    if (building.LOD2Solid[i].TextureFile != null)
+                    if (surfaces[i].TextureFile != null)
                     {
-                        textureFile = building.LOD2Solid[i].TextureFile;
+                        textureFile = surfaces[i].TextureFile;
                     }
                 }
             }
@@ -57,7 +58,10 @@ namespace PlateauCityGml
             Vertices = vtx.ToArray();
             UV = uvs.ToArray();
             string current = Path.GetDirectoryName(building.GmlPath);
-            TextureFile = Path.Combine(current,textureFile);
+            if(textureFile != null)
+            {
+                TextureFile = Path.Combine(current, textureFile);
+            }
         }
         public void SaveAsObj(string filename)
         {
@@ -111,8 +115,12 @@ namespace PlateauCityGml
             File.WriteAllLines(fullpath, model.ToArray());
 
             // .obj ファイルのローダー互換性のためテクスチャを .mtl と同じディレクトリにコピー 
-            string textureLocal = Path.GetFileName(TextureFile);
-            File.Copy(TextureFile, Path.Combine(current,textureLocal), true);
+            string textureLocal = "";
+            if (TextureFile != null)
+            {
+                textureLocal = Path.GetFileName(TextureFile);
+                File.Copy(TextureFile, Path.Combine(current, textureLocal), true);
+            }
 
             model.Clear();
             model.Add("newmtl Material");
@@ -124,7 +132,10 @@ namespace PlateauCityGml
             model.Add("Tr 0.000000");
             model.Add("Pr 0.333333");
             model.Add("Pm 0.080000");
-            model.Add($"map_Kd {textureLocal}");
+            if(textureLocal != "")
+            {
+                model.Add($"map_Kd {textureLocal}");
+            }
 
             // .mtl ファイル書き出し
             File.WriteAllLines(Path.Combine(current,mtlName), model.ToArray());
