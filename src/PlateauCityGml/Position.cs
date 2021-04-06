@@ -98,7 +98,7 @@ namespace PlateauCityGml
             Position xp = new Position(origin.Latitude, Longitude, origin.Altitude);
             Position yp = new Position(Latitude, origin.Longitude, origin.Altitude);
             return new Vector3 {
-                X = (float)(xp.DistanceTo(origin) * ((Longitude - origin.Longitude) >= 0 ? 1.0 : -1.0)),
+                X = -(float)(xp.DistanceTo(origin) * ((Longitude - origin.Longitude) >= 0 ? 1.0 : -1.0)),
                 Y = (float)(Altitude - origin.Altitude),
                 Z = (float)(yp.DistanceTo(origin) * ((Latitude - origin.Latitude) >= 0 ? 1.0 : -1.0))
             };
