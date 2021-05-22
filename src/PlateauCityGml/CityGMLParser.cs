@@ -20,6 +20,7 @@ namespace PlateauCityGml
 
             XmlReaderSettings settings = new XmlReaderSettings();
             settings.IgnoreWhitespace = true;
+            TextureInfo textures = null;
 
             using (var fileStream = File.OpenText(gmlPath))
             using (XmlReader reader = XmlReader.Create(fileStream, settings))
@@ -30,23 +31,36 @@ namespace PlateauCityGml
                     switch (reader.NodeType)
                     {
                         case XmlNodeType.Element:
-                            if(reader.Name == bldgBuilding)
+                            if (reader.Name == bldgBuilding)
                             {
-                                building = CreateBuilding(reader);
-                                building.GmlPath = fullPath;
-                                buildings.Add(building);
+                                try
+                                {
+                                    building = CreateBuilding(reader);
+
+                                    building.GmlPath = fullPath;
+                                    buildings.Add(building);
+                                }catch(Exception ex)
+                                {
+                                    Console.WriteLine(ex.Message); // Parse error
+                                }
                             }
-                            if(reader.Name == "app:appearanceMember")
+
+                            if (reader.Name == "app:appearanceMember")
                             {
-                                AddTexture(reader, buildings);
+                                textures = ParseTextureInfo(reader, buildings);
                             }
                             break;
                         default:
                             break;
                     }
                 }
+                
             }
-
+            if(textures != null)
+            {
+                // UVデータをビルデータにマージ
+                MargeData(buildings, textures);
+            }
             return buildings.ToArray();
         }
 
@@ -66,10 +80,15 @@ namespace PlateauCityGml
                 {
                     string id = node.InnerText;
                     building.Id = id;
+                    if (building.Id.IndexOf("514080") > 0)
+                    {
+
+                    }
                 }
                 if (node.Name == "gml:name")
                 {
                     building.Name = node.FirstChild.Value;
+
                 }
                 if (node.Name == "bldg:measuredHeight")
                 {
@@ -95,7 +114,19 @@ namespace PlateauCityGml
             // LOD2が指定されていない場合は null
             if(surfaceDic != null)
             {
-                building.LOD2Solid = surfaceDic.Values.ToArray();
+                List<Surface> s = new List<Surface>();
+                foreach (var d in surfaceDic.Keys)
+                {
+                    if (surfaceDic[d] != null && surfaceDic[d].LowerCorner != Position.None)
+                    {
+                        s.Add(surfaceDic[d]);
+                    }
+                }
+                //var s = from c in surfaceDic
+                //        where c.Value.LowerCorner != null
+                //        select c.Value;
+
+                building.LOD2Solid = s.ToArray();
                 (Position lower, Position upper) = GetCorner(building.LOD2Solid);
                 building.LowerCorner = lower;
                 building.UpperCorner = upper;
@@ -119,12 +150,15 @@ namespace PlateauCityGml
             double uAlt = double.MinValue;
             foreach (var s in surfaces)
             {
-                if (s.LowerCorner.Latitude < lLat) lLat = s.LowerCorner.Latitude;
-                if (s.LowerCorner.Longitude < lLon) lLon = s.LowerCorner.Longitude;
-                if (s.LowerCorner.Altitude < lAlt) lAlt = s.LowerCorner.Altitude;
-                if (s.UpperCorner.Latitude > uLat) uLat = s.UpperCorner.Latitude;
-                if (s.UpperCorner.Longitude > uLon) uLon = s.UpperCorner.Longitude;
-                if (s.UpperCorner.Altitude > uAlt) uAlt = s.UpperCorner.Altitude;
+                if(s.LowerCorner != null)
+                {
+                    if (s.LowerCorner.Latitude < lLat) lLat = s.LowerCorner.Latitude;
+                    if (s.LowerCorner.Longitude < lLon) lLon = s.LowerCorner.Longitude;
+                    if (s.LowerCorner.Altitude < lAlt) lAlt = s.LowerCorner.Altitude;
+                    if (s.UpperCorner.Latitude > uLat) uLat = s.UpperCorner.Latitude;
+                    if (s.UpperCorner.Longitude > uLon) uLon = s.UpperCorner.Longitude;
+                    if (s.UpperCorner.Altitude > uAlt) uAlt = s.UpperCorner.Altitude;
+                }
             }
             return (new Position(lLat, lLon, lAlt), new Position(uLat, uLon, uAlt));
         }
@@ -156,10 +190,25 @@ namespace PlateauCityGml
         {
             // 名前に対応する頂点リストを取得する
             XmlNode n = node.FirstChild.FirstChild.FirstChild.FirstChild.FirstChild;
-            string name = n.Attributes["gml:id"].Value;
-            XmlNode p = n.FirstChild.FirstChild.FirstChild.FirstChild;
-            Position[] positions = Position.ParseString(p.Value);
-            polyDic[name].SetPositions(positions);
+            string xml = node.InnerXml.Replace("gml:","");
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xml);
+            XmlNodeList s = doc.SelectNodes("//surfaceMember");
+            foreach (XmlNode member in s)
+            {
+                var m2 = member.FirstChild;
+                string name = m2.Attributes["id"].Value;
+                XmlNode p = m2.FirstChild.FirstChild.FirstChild.FirstChild;
+                Position[] positions = Position.ParseString(p.Value);
+                polyDic[name].SetPositions(positions);
+            }
+            //XmlNameTable xmlNameTable = new NameTable();
+            //XmlNamespaceManager xmlnsManager = new XmlNamespaceManager(xmlNameTable);
+            //xmlnsManager.AddNamespace("gml", "http://www.opengis.net/gml");
+            //XmlNodeList s = node.SelectNodes("//gml:MultiSurface",xmlnsManager);
+
+
+
         }
         public Dictionary<string, Surface> GetPolyList(XmlNode node)
         {
@@ -175,7 +224,7 @@ namespace PlateauCityGml
             return dic;
         }
 
-        private void AddTexture(XmlReader reader, List<Building> buildings)
+        private TextureInfo ParseTextureInfo(XmlReader reader, List<Building> buildings)
         {
             var map = new Dictionary<string, (int index, Vector2[] uv)>();
             XmlDocument doc = new XmlDocument();
@@ -208,8 +257,8 @@ namespace PlateauCityGml
                     }
                 }
             }
-            // UVデータをビルデータにマージ
-            MargeData(buildings, map, textureFiles);
+            return new TextureInfo { Files = textureFiles, Map = map };
+
 
         }
         private Vector2[] ConvertToUV(string uvText)
@@ -227,8 +276,10 @@ namespace PlateauCityGml
             }
             return list;
         }
-        private void MargeData(List<Building> buildings, Dictionary<string, (int Index, Vector2[] UV)> map, List<string> textureFiles)
+        private void MargeData(List<Building> buildings, TextureInfo textureInfo)
         {
+            var map = textureInfo.Map;
+            var textureFiles = textureInfo.Files;
             foreach(var b in buildings)
             {
                 if(b.LOD2Solid == null)
@@ -242,7 +293,7 @@ namespace PlateauCityGml
                     if (map.ContainsKey(b.LOD2Solid[i].Id))
                     {
                         var d = map[b.LOD2Solid[i].Id];
-                        b.LOD2Solid[i].UVs = d.UV;
+                        b.LOD2Solid[i].UVs = d.uv;
                         data.Add(d);
                     }
                 }

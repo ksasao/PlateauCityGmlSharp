@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlateauCityGml", "PlateauCityGml\PlateauCityGml.csproj", "{38B2A17B-CCB7-40D0-958A-6E52C5BAF7CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlateauCityGmlTest", "PlateauCityGmlTest\PlateauCityGmlTest.csproj", "{9FD5E50C-2004-474D-9968-F8F368A4ECAC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlateauCityGmlToObj", "PlateauCityGmlToObj\PlateauCityGmlToObj.csproj", "{9FD5E50C-2004-474D-9968-F8F368A4ECAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

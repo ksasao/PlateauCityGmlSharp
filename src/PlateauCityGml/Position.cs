@@ -13,6 +13,8 @@ namespace PlateauCityGml
         public double Longitude { get; set; }
         public double Altitude { get; set; }
 
+        public static readonly Position None = new Position(-999.0, -999.0, -999.0);
+
         public static Position[] ParseString(string positionString)
         {
             string[] items = positionString.Split(' ');
@@ -33,7 +35,7 @@ namespace PlateauCityGml
         {
             if(positions == null || positions.Length == 0)
             {
-                return null;
+                return None;
             }
             double latitude  = positions.Min(c => c.Latitude);
             double longitude = positions.Min(c => c.Longitude);
@@ -45,7 +47,7 @@ namespace PlateauCityGml
         {
             if (positions == null || positions.Length == 0)
             {
-                return null;
+                return None;
             }
             double latitude  = positions.Max(c => c.Latitude);
             double longitude = positions.Max(c => c.Longitude);
@@ -63,19 +65,11 @@ namespace PlateauCityGml
         }
         public static bool operator== (Position p1, Position p2)
         {
-            if(p1 == null && p2 == null)
-            {
-                return true;
-            }
             return p1.Latitude == p2.Latitude && p1.Longitude == p2.Longitude && p1.Altitude == p2.Altitude;
         }
         public static bool operator !=(Position p1, Position p2)
         {
-            if(p1 != null || p2 != null)
-            {
-                return true;
-            }
-            return p1.Latitude != p2.Latitude || p1.Longitude != p2.Longitude || p1.Altitude != p2.Altitude;
+            return p1?.Latitude != p2?.Latitude || p1?.Longitude != p2?.Longitude || p1?.Altitude != p2?.Altitude;
         }
         /// <summary>
         /// 点Pまでの距離を求める。まず緯度・経度から地表での距離を求め、その後高度を考慮。

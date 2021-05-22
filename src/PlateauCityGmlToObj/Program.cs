@@ -52,15 +52,23 @@ namespace CityGMLTest
 
             for (int i = 0; i < buildings.Length; i++)
             {
-                Building building = buildings[i];
-                if (building.LOD2Solid == null && building.LOD1Solid != null)
+                try
                 {
-                    building.LOD2Solid = building.LOD1Solid;
+                    Building building = buildings[i];
+                    if (building.LOD2Solid == null && building.LOD1Solid != null)
+                    {
+                        building.LOD2Solid = building.LOD1Solid;
+                    }
+                    if (building.LOD2Solid != null)
+                    {
+                        //building.LOD2Solid = building.LOD1Solid;
+                        ModelGenerator mg = new ModelGenerator(building);
+                        mg.SaveAsObj(Path.Combine(outputPath, building.Id + ".obj"));
+                    }
                 }
-                if (building.LOD2Solid != null)
+                catch
                 {
-                    ModelGenerator mg = new ModelGenerator(building);
-                    mg.SaveAsObj(Path.Combine(outputPath, building.Id + ".obj"));
+
                 }
 
             }

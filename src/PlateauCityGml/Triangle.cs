@@ -15,7 +15,7 @@ namespace PlateauCityGml
 
         public Vector3 Normal { get
             {
-                Vector3 n = -Vector3.Cross(P2.Value - P1.Value, P0.Value - P1.Value);
+                Vector3 n = Vector3.Cross(P2.Value - P1.Value, P0.Value - P1.Value);
                 n = Vector3.Normalize(n);
                 return n;
             }
