@@ -13,7 +13,7 @@ namespace PlateauCityGml
         public double Longitude { get; set; }
         public double Altitude { get; set; }
 
-        public static readonly Position None = new Position(-999.0, -999.0, -999.0);
+        internal static readonly Position None = new Position(-999.0, -999.0, -999.0);
 
         public static Position[] ParseString(string positionString)
         {

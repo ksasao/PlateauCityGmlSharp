@@ -15,6 +15,9 @@ namespace PlateauCityGml
         public Vertex[] Vertices { get; private set; }
         public string TextureFile { get; private set; }
 
+        public Position LowerCorner { get; private set; }
+        public Position UpperCorner { get; private set; }
+
         private List<string> model = new List<string>();
         private Building _building;
         public ModelGenerator(Building building)
@@ -23,7 +26,9 @@ namespace PlateauCityGml
             List<Triangle> tris = new List<Triangle>();
             List<Vector2> uvs = new List<Vector2>();
             List<Vertex> vtx = new List<Vertex>();
-            Position origin = building.LowerCorner;
+            LowerCorner = building.LowerCorner;
+            UpperCorner = building.UpperCorner;
+
             int count = 0;
             int offset = 0;
             string textureFile = null;
@@ -33,7 +38,7 @@ namespace PlateauCityGml
                 if (surfaces[i].Positions != null)
                 {
                     Triangulator tr = new Triangulator();
-                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(surfaces[i].Positions, surfaces[i].UVs, offset, origin);
+                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(surfaces[i].Positions, surfaces[i].UVs, offset, LowerCorner);
                     vtx.AddRange(vertex);
                     tris.AddRange(triangle);
                     offset += vertex.Length;
@@ -72,6 +77,8 @@ namespace PlateauCityGml
             Directory.CreateDirectory(current);
 
             string mtlName = Path.GetFileNameWithoutExtension(filename) + ".mtl";
+            model.Add($"# Lower: {LowerCorner.Latitude:F7},{LowerCorner.Longitude:F7},{LowerCorner.Altitude}");
+            model.Add($"# Upper: {UpperCorner.Latitude:F7},{UpperCorner.Longitude:F7},{UpperCorner.Altitude}");
             model.Add($"mtllib {Path.GetFileName(mtlName)}");
             model.Add("g model");
 
@@ -83,15 +90,19 @@ namespace PlateauCityGml
             // UV を生成
             for(int i=0; i<UV.Length; i++)
             {
+                if(UV[i].X < 0)
+                {
+                    continue;
+                }
                 model.Add($"vt {UV[i].X} {UV[i].Y}");
             }
 
             // 法線ベクトルを生成
-            for(int i=0; i < Triangles.Length; i++)
-            {
-                Vector3 n = Triangles[i].Normal;
-                model.Add($"vn {n.X} {n.Y} {n.Z}");
-            }
+            //for(int i=0; i < Triangles.Length; i++)
+            //{
+            //    Vector3 n = Triangles[i].Normal;
+            //    model.Add($"vn {n.X} {n.Y} {n.Z}");
+            //}
             // 面を生成(順序を要確認)
             model.Add("usemtl Material");
             for(int i=0; i < Triangles.Length; i++)
@@ -99,15 +110,15 @@ namespace PlateauCityGml
                 Triangle t = Triangles[i];
                 if (t.HasTexture)
                 {
-                    model.Add($"f {t.P2.Index + 1}/{t.P2.Index + 1}/{i + 1} "
-                        + $"{t.P1.Index + 1}/{t.P1.Index + 1}/{i + 1} "
-                        + $"{t.P0.Index + 1}/{t.P0.Index + 1}/{i + 1}");
+                    model.Add($"f {t.P0.Index + 1}/{t.P0.Index + 1} " // /{i + 1}
+                        + $"{t.P1.Index + 1}/{t.P1.Index + 1} "
+                        + $"{t.P2.Index + 1}/{t.P2.Index + 1}");
                 }
                 else
                 {
-                    model.Add($"f {t.P0.Index + 1}//{i + 1} "
-                        + $"{t.P1.Index + 1}//{i + 1} "
-                        + $"{t.P2.Index + 1}//{i + 1}");
+                    model.Add($"f {t.P0.Index + 1} "
+                        + $"{t.P1.Index + 1} "
+                        + $"{t.P2.Index + 1}");
                 }
             }
 

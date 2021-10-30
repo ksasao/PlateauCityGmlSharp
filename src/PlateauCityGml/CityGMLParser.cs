@@ -189,7 +189,7 @@ namespace PlateauCityGml
         private void UpdateSurfaceDic(XmlNode node, Dictionary<string, Surface> polyDic)
         {
             // 名前に対応する頂点リストを取得する
-            XmlNode n = node.FirstChild.FirstChild.FirstChild.FirstChild.FirstChild;
+            XmlNode n = node.FirstChild.FirstChild.FirstChild?.FirstChild?.FirstChild;
             string xml = node.InnerXml.Replace("gml:","");
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
@@ -306,20 +306,18 @@ namespace PlateauCityGml
                         break;
                     }
                 }
-                if (singleTexture)
+
+                // テクスチャファイルが複数指定されている場合、実態としては同じ画像なので
+                // 最初のテクスチャファイルを割り当てる
+                // * singleTexture チェックを無視
+
+                for (int i = 0; i < data.Count; i++)
                 {
-                    for (int i = 0; i < data.Count; i++)
+                    string key = b.LOD2Solid[i].Id;
+                    if (map.ContainsKey(key))
                     {
-                        string key = b.LOD2Solid[i].Id;
-                        if (map.ContainsKey(key))
-                        {
-                            b.LOD2Solid[i].TextureFile = textureFiles[data[0].Index];
-                        }
+                        b.LOD2Solid[i].TextureFile = textureFiles[data[0].Index];
                     }
-                }
-                else
-                {
-                    // not supported
                 }
             }
         }

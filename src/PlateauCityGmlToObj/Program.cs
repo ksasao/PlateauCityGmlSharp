@@ -57,7 +57,7 @@ namespace CityGMLTest
                     Building building = buildings[i];
                     if (building.LOD2Solid == null && building.LOD1Solid != null)
                     {
-                        building.LOD2Solid = building.LOD1Solid;
+                        //building.LOD2Solid = building.LOD1Solid;
                     }
                     if (building.LOD2Solid != null)
                     {
