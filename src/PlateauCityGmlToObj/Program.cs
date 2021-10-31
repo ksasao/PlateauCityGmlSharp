@@ -18,7 +18,9 @@ namespace CityGMLTest
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Project PLATEAU の CityGMLファイル(.gml)を .obj 形式に変換します。単位は m です。");
+                Console.WriteLine("Project PLATEAU の CityGMLファイル(.gml)を .obj 形式に変換します。");
+                Console.WriteLine("https://github.com/ksasao/PlateauCityGmlSharp");
+                Console.WriteLine();
                 Console.WriteLine("基準点を指定しない場合は、モデル全体の緯度、経度、高度 の最小値が原点になります。");
                 Console.WriteLine(".obj ファイルは outputフォルダ以下に出力されます。");
                 Console.WriteLine();

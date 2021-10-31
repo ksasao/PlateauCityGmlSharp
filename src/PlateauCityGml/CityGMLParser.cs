@@ -83,10 +83,6 @@ namespace PlateauCityGml
                 {
                     string id = node.InnerText;
                     building.Id = id;
-                    if (building.Id.IndexOf("514080") > 0)
-                    {
-
-                    }
                 }
                 if (node.Name == "gml:name")
                 {
@@ -300,15 +296,15 @@ namespace PlateauCityGml
                         data.Add(d);
                     }
                 }
-                bool singleTexture = true;
-                for(int i=1; i<data.Count; i++)
-                {
-                    if(data[0].Index != data[i].Index)
-                    {
-                        singleTexture = false;
-                        break;
-                    }
-                }
+                //bool singleTexture = true;
+                //for(int i=1; i<data.Count; i++)
+                //{
+                //    if(data[0].Index != data[i].Index)
+                //    {
+                //        singleTexture = false;
+                //        break;
+                //    }
+                //}
 
                 // テクスチャファイルが複数指定されている場合、実態としては同じ画像なので
                 // 最初のテクスチャファイルを割り当てる
