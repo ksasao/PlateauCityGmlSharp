@@ -36,10 +36,13 @@ namespace PlateauCityGml
                                 try
                                 {
                                     building = CreateBuilding(reader);
-
-                                    building.GmlPath = fullPath;
-                                    buildings.Add(building);
-                                }catch(Exception ex)
+                                    if(building.LOD1Solid != null || building.LOD2Solid != null)
+                                    {
+                                        building.GmlPath = fullPath;
+                                        buildings.Add(building);
+                                    }
+                                }
+                                catch(Exception ex)
                                 {
                                     Console.WriteLine(ex.Message); // Parse error
                                 }

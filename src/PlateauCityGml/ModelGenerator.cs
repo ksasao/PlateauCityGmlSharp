@@ -17,10 +17,21 @@ namespace PlateauCityGml
 
         public Position LowerCorner { get; private set; }
         public Position UpperCorner { get; private set; }
+        public Position Origin { get; private set; }
 
         private List<string> model = new List<string>();
         private Building _building;
+
+        public ModelGenerator(Building building, Position origin)
+        {
+            ModelInitialize(building, origin);
+
+        }
         public ModelGenerator(Building building)
+        {
+            ModelInitialize(building, building.LowerCorner);
+        }
+        private void ModelInitialize(Building building, Position origin)
         {
             _building = building;
             List<Triangle> tris = new List<Triangle>();
@@ -29,26 +40,31 @@ namespace PlateauCityGml
             LowerCorner = building.LowerCorner;
             UpperCorner = building.UpperCorner;
 
+            Origin = origin;
             int count = 0;
             int offset = 0;
             string textureFile = null;
             Surface[] surfaces = building.LOD2Solid;
+            if(surfaces == null)
+            {
+                surfaces = building.LOD1Solid;
+            }
             for (int i = 0; i < surfaces.Length; i++, count++)
             {
                 if (surfaces[i].Positions != null)
                 {
                     Triangulator tr = new Triangulator();
-                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(surfaces[i].Positions, surfaces[i].UVs, offset, LowerCorner);
+                    (Vertex[] vertex, Triangle[] triangle) = tr.Convert(surfaces[i].Positions, surfaces[i].UVs, offset, Origin);
                     vtx.AddRange(vertex);
                     tris.AddRange(triangle);
                     offset += vertex.Length;
-                    if(surfaces[i].UVs != null)
+                    if (surfaces[i].UVs != null)
                     {
                         uvs.AddRange(surfaces[i].UVs);
                     }
                     else
                     {
-                        for(int j=0; j < vertex.Length; j++)
+                        for (int j = 0; j < vertex.Length; j++)
                         {
                             uvs.Add(new Vector2(-1, -1));
                         }
@@ -63,11 +79,13 @@ namespace PlateauCityGml
             Vertices = vtx.ToArray();
             UV = uvs.ToArray();
             string current = Path.GetDirectoryName(building.GmlPath);
-            if(textureFile != null)
+            if (textureFile != null)
             {
                 TextureFile = Path.Combine(current, textureFile);
             }
         }
+
+
         public void SaveAsObj(string filename)
         {
             model.Clear();
@@ -77,8 +95,9 @@ namespace PlateauCityGml
             Directory.CreateDirectory(current);
 
             string mtlName = Path.GetFileNameWithoutExtension(filename) + ".mtl";
-            model.Add($"# Lower: {LowerCorner.Latitude:F7},{LowerCorner.Longitude:F7},{LowerCorner.Altitude}");
-            model.Add($"# Upper: {UpperCorner.Latitude:F7},{UpperCorner.Longitude:F7},{UpperCorner.Altitude}");
+            model.Add($"# Origin: {Origin.Latitude:F7},{Origin.Longitude:F7},{Origin.Altitude}");
+            model.Add($"# Lower : {LowerCorner.Latitude:F7},{LowerCorner.Longitude:F7},{LowerCorner.Altitude}");
+            model.Add($"# Upper : {UpperCorner.Latitude:F7},{UpperCorner.Longitude:F7},{UpperCorner.Altitude}");
             model.Add($"mtllib {Path.GetFileName(mtlName)}");
             model.Add("g model");
 
@@ -90,10 +109,6 @@ namespace PlateauCityGml
             // UV を生成
             for(int i=0; i<UV.Length; i++)
             {
-                if(UV[i].X < 0)
-                {
-                    continue;
-                }
                 model.Add($"vt {UV[i].X} {UV[i].Y}");
             }
 
@@ -136,7 +151,15 @@ namespace PlateauCityGml
             model.Clear();
             model.Add("newmtl Material");
             model.Add("Ka 0.000000 0.000000 0.000000");
-            model.Add("Kd 0.803922 0.803922 0.803922");
+            if (textureLocal != "")
+            {
+                model.Add("Kd 1.0 1.0 1.0");
+            }
+            else
+            {
+                model.Add("Kd 0.45 0.5 0.5");
+            }
+
             model.Add("Ks 0.000000 0.000000 0.000000");
             model.Add("Ns 2.000000");
             model.Add("d 1.000000");
