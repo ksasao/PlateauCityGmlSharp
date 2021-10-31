@@ -14,6 +14,8 @@ G空間情報センターで提供されている .obj, .fbx 形式と比較し�
 
 ## ダウンロード
 
+- [v0.1](https://github.com/ksasao/PlateauCityGmlSharp/releases/download/v0.1/CityGMLToObj_v0.1.zip) (2021/10/31)
+
 ## 利用方法
 
 ```txt
@@ -32,7 +34,7 @@ CityGMLToObj .gmlファイルのパス [[基準点となる緯度] [経度] [高
 CityGMLToObj.exe sample.gml
 ```
 
-実行すると、1行目に CityGML モデルの原点位置(緯度、経度、高度)を表示するとともに、2行目以降に各モデルの情報を出力します。
+実行すると、1行目に CityGML モデルの原点位置(緯度、経度、高度)を表示するとともに、2行目以降に各モデルの情報を出力します。出力はタブ区切りです。
 
 ```txt
 Origin: 37.391669674984,140.374857207597,226.125
