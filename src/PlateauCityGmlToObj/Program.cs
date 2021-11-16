@@ -72,9 +72,27 @@ namespace CityGMLTest
         static void CreateModel(string path,string outputPath, Position origin)
         {
             var parser = new CityGMLParser();
+            var coType = parser.GetCityObjectType(path);
+            if(coType == CityObjectType.Building)
+            {
+                origin = CreateBuilding(path, outputPath, origin, parser);
+            }
+            else if(coType == CityObjectType.Relief)
+            {
+                origin = CreateRelief(path, outputPath, origin, parser);
+            }
+            else
+            {
+                Console.WriteLine("サポートしていない形式です。");
+            }
+
+        }
+
+        private static Position CreateBuilding(string path, string outputPath, Position origin, CityGMLParser parser)
+        {
             var buildings = parser.GetBuildings(path);
 
-            if(origin == defaultPosition)
+            if (origin == defaultPosition)
             {
                 origin = new Position
                 {
@@ -104,7 +122,63 @@ namespace CityGMLTest
                 }
 
             }
+            return origin;
+        }
 
+        private static Position CreateRelief(string path, string outputPath, Position origin, CityGMLParser parser)
+        {
+            var relief = parser.GetRelief(path);
+
+            if (origin == defaultPosition)
+            {
+                origin = new Position
+                {
+                    Latitude = relief.LowerCorner.Latitude,
+                    Longitude = relief.LowerCorner.Longitude,
+                    Altitude = relief.LowerCorner.Altitude
+                };
+            }
+            // ヘッダ
+            Console.WriteLine($"Origin: {origin.Latitude},{origin.Longitude},{origin.Altitude}\t\t\t\t\t");
+            Console.WriteLine($"ID\tLatitude\tLongitude\tAltitude\tTriangles\tName");
+            Building b = new Building();
+            b.LOD1Solid = relief.LOD1Solid;
+            b.LowerCorner = relief.LowerCorner;
+            b.UpperCorner = relief.UpperCorner;
+            b.Id = Path.GetFileNameWithoutExtension(path);
+            try
+            {
+                ModelGenerator mg = new ModelGenerator(b, origin);
+                mg.SaveAsObj(Path.Combine(outputPath, b.Id + ".obj"));
+
+                // ステータス表示
+                int triangles = b.LOD1Solid.Length;
+                Console.WriteLine($"{b.Id}\t{b.LowerCorner.Latitude:F8}\t{b.LowerCorner.Longitude:F8}\t{b.LowerCorner.Altitude}\t{triangles}\t{b.Name}");
+            }
+            catch
+            {
+
+            }
+
+            //for (int i = 0; i < relief.Length; i++)
+            //{
+            //    try
+            //    {
+            //        Building b = relief[i];
+            //        ModelGenerator mg = new ModelGenerator(b, origin);
+            //        mg.SaveAsObj(Path.Combine(outputPath, b.Id + ".obj"));
+
+            //        // ステータス表示
+            //        int triangles = b.LOD2Solid != null ? b.LOD2Solid.Length : b.LOD1Solid.Length;
+            //        Console.WriteLine($"{b.Id}\t{b.LowerCorner.Latitude:F8}\t{b.LowerCorner.Longitude:F8}\t{b.LowerCorner.Altitude}\t{triangles}\t{b.Name}");
+            //    }
+            //    catch
+            //    {
+
+            //    }
+
+            //}
+            return origin;
         }
     }
 }

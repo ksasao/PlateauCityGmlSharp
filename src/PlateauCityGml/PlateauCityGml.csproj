@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CityGMLParser.cs" />
+    <Compile Include="CityObject\Relief.cs" />
     <Compile Include="CityObject\Building.cs" />
     <Compile Include="ModelGenerator.cs" />
     <Compile Include="Position.cs" />

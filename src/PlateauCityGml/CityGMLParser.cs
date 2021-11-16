@@ -9,9 +9,92 @@ using System.Xml;
 
 namespace PlateauCityGml
 {
+    public enum CityObjectType { Undefined, Building, Relief };
     public class CityGMLParser
     {
         enum State { None, Name, 建物ID, SurfaceMember };
+
+
+        public CityObjectType GetCityObjectType(string gmlPath)
+        {
+            string fullPath = Path.GetFullPath(gmlPath);
+            XmlReaderSettings settings = new XmlReaderSettings();
+            settings.IgnoreWhitespace = true;
+            const string bldgBuilding = "bldg:Building";
+            const string demReliefFeature = "dem:ReliefFeature";
+
+            CityObjectType coType = CityObjectType.Undefined;
+
+            using (var fileStream = File.OpenText(gmlPath))
+            using (XmlReader reader = XmlReader.Create(fileStream, settings))
+            {
+                int count = 0;
+                while (reader.Read() && count++ < 100 && coType == CityObjectType.Undefined)
+                {
+                    switch (reader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            if (reader.Name == bldgBuilding)
+                            {
+                                coType = CityObjectType.Building;
+                            }
+                            else if(reader.Name == demReliefFeature)
+                            {
+                                coType = CityObjectType.Relief;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return coType;
+        }
+
+        public Relief GetRelief(string gmlPath)
+        {
+            const string trianglePatches = "gml:trianglePatches";
+            string fullPath = Path.GetFullPath(gmlPath);
+
+            XmlReaderSettings settings = new XmlReaderSettings();
+            settings.IgnoreWhitespace = true;
+
+            Relief relief = null;
+
+            using (var fileStream = File.OpenText(gmlPath))
+            using (XmlReader reader = XmlReader.Create(fileStream, settings))
+            {
+                while (reader.Read())
+                {
+                    switch (reader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            if (reader.Name == trianglePatches)
+                            {
+                                try
+                                {
+                                    relief = CreateRelief(reader);
+                                    if(relief != null)
+                                    {
+                                        break;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.Message); // Parse error
+                                }
+                            }
+
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            }
+            return relief;
+        }
+
         public Building[] GetBuildings(string gmlPath)
         {
             const string bldgBuilding = "bldg:Building";
@@ -65,6 +148,40 @@ namespace PlateauCityGml
                 MargeData(buildings, textures);
             }
             return buildings.ToArray();
+        }
+
+
+        public Relief CreateRelief(XmlReader reader)
+        {
+            Relief building = new Relief();
+
+            XmlDocument doc = new XmlDocument();
+            var r2 = reader.ReadSubtree();
+            XmlNode cd = doc.ReadNode(r2);
+            XmlNodeList member = cd.ChildNodes;
+            List<Surface> surfaces = new List<Surface>();
+            foreach (XmlNode node in member)
+            {
+                // 多角形の名前のリストを取得
+                if (node.Name == "gml:Triangle")
+                {
+                    Surface s = new Surface();
+                    string posStr = node.InnerText;
+                    s.SetPositions(Position.ParseString(posStr));
+                    surfaces.Add(s);
+                }
+
+            }
+            building.LOD1Solid = surfaces.ToArray();
+
+            if (building.LOD1Solid != null)
+            {
+                (Position lower, Position upper) = GetCorner(building.LOD1Solid);
+                building.LowerCorner = lower;
+                building.UpperCorner = upper;
+            }
+
+            return building;
         }
 
         public Building CreateBuilding(XmlReader reader)
