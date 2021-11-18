@@ -14,6 +14,19 @@ namespace PlateauCityGml
     {
         enum State { None, Name, 建物ID, SurfaceMember };
 
+        public Position LowerCorner { get; set; } =  new Position { Latitude = -100, Longitude = -200};
+        public Position UpperCorner { get; set; } = new Position { Latitude = 100, Longitude = 200 };
+
+        public CityGMLParser()
+        {
+
+        }
+
+        public CityGMLParser(Position lower, Position upper)
+        {
+            LowerCorner = lower;
+            UpperCorner = upper;
+        }
 
         public CityObjectType GetCityObjectType(string gmlPath)
         {
@@ -73,13 +86,7 @@ namespace PlateauCityGml
                             {
                                 try
                                 {
-                                    Position lower = new Position { Latitude = 35, Longitude = 130};
-                                    Position upper = new Position { Latitude = 38, Longitude = 145};
-                                    //Position lower = new Position { Latitude = 37.391672361041479, Longitude = 140.3875163144437 };
-                                    //Position upper = new Position { Latitude = 37.400888091161093, Longitude = 140.40035408286553 };
-                                    //Position lower = new Position { Latitude = 37.391669674983973, Longitude = 140.37485720759685 };
-                                    //Position upper = new Position { Latitude = 37.400360861824289, Longitude = 140.38780521093011 };
-                                    relief = CreateRelief(reader, lower, upper);
+                                    relief = CreateRelief(reader);
                                     if(relief != null)
                                     {
                                         break;
@@ -157,7 +164,7 @@ namespace PlateauCityGml
         }
 
 
-        public Relief CreateRelief(XmlReader reader,Position lowerCorner, Position upperCorner)
+        public Relief CreateRelief(XmlReader reader)
         {
             Relief building = new Relief();
 
@@ -166,6 +173,7 @@ namespace PlateauCityGml
             XmlNode cd = doc.ReadNode(r2);
             XmlNodeList member = cd.ChildNodes;
             List<Surface> surfaces = new List<Surface>();
+
             foreach (XmlNode node in member)
             {
                 if (node.Name == "gml:Triangle")
@@ -173,8 +181,8 @@ namespace PlateauCityGml
                     Surface s = new Surface();
                     string posStr = node.InnerText;
                     s.SetPositions(Position.ParseString(posStr));
-                    if(lowerCorner.Latitude < s.LowerCorner.Latitude && lowerCorner.Longitude < s.LowerCorner.Longitude
-                        && s.UpperCorner.Latitude < upperCorner.Latitude && s.UpperCorner.Longitude < upperCorner.Longitude)
+                    if(LowerCorner.Latitude < s.LowerCorner.Latitude && LowerCorner.Longitude < s.LowerCorner.Longitude
+                        && s.UpperCorner.Latitude < UpperCorner.Latitude && s.UpperCorner.Longitude < UpperCorner.Longitude)
                     {
                         // 法線を反転する
                         Position p = s.Positions[2];
@@ -309,8 +317,13 @@ namespace PlateauCityGml
             {
                 Surface s = new Surface();
                 string posStr = list[i].FirstChild.FirstChild.FirstChild.FirstChild.FirstChild.Value;
+
                 s.SetPositions(Position.ParseString(posStr));
-                surfaces.Add(s);
+                if (LowerCorner.Latitude < s.LowerCorner.Latitude && LowerCorner.Longitude < s.LowerCorner.Longitude
+                    && s.UpperCorner.Latitude < UpperCorner.Latitude && s.UpperCorner.Longitude < UpperCorner.Longitude)
+                {
+                    surfaces.Add(s);
+                }
             }
             return surfaces.ToArray();
         }
@@ -331,13 +344,6 @@ namespace PlateauCityGml
                 Position[] positions = Position.ParseString(p.Value);
                 polyDic[name].SetPositions(positions);
             }
-            //XmlNameTable xmlNameTable = new NameTable();
-            //XmlNamespaceManager xmlnsManager = new XmlNamespaceManager(xmlNameTable);
-            //xmlnsManager.AddNamespace("gml", "http://www.opengis.net/gml");
-            //XmlNodeList s = node.SelectNodes("//gml:MultiSurface",xmlnsManager);
-
-
-
         }
         public Dictionary<string, Surface> GetPolyList(XmlNode node)
         {

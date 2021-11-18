@@ -13,7 +13,8 @@ namespace CityGMLTest
 {
     class Program
     {
-        
+        static CityGMLParser parser;
+
         static void Main(string[] args)
         {
             if (args.Length < 1)
@@ -24,7 +25,7 @@ namespace CityGMLTest
                 Console.WriteLine("基準点を指定しない場合は、モデル全体の緯度、経度、高度 の最小値が原点になります。");
                 Console.WriteLine(".obj ファイルは outputフォルダ以下に出力されます。");
                 Console.WriteLine();
-                Console.WriteLine("使い方: CityGMLToObj .gmlファイルのパス [[基準点となる緯度] [経度] [高度]]");
+                Console.WriteLine("使い方: CityGMLToObj .gmlファイルのパス [[基準点となる緯度] [経度] [高度] [緯度の下限] [経度の下限] [緯度の上限] [経度の上限]]");
                 Console.WriteLine();
                 Console.WriteLine("例1) シンプルな利用方法(テクスチャがある場合はフルパスを指定してください)");
                 Console.WriteLine("CityGMLToObj sample.gml");
@@ -51,6 +52,27 @@ namespace CityGMLTest
                         };
                         CreateModel(args[0], path, p);
                     }
+                    else if(args.Length == 8)
+                    {
+                        Position p = new Position
+                        {
+                            Latitude = Convert.ToDouble(args[1]),
+                            Longitude = Convert.ToDouble(args[2]),
+                            Altitude = Convert.ToDouble(args[3])
+                        };
+                        Position lower = new Position
+                        {
+                            Latitude = Convert.ToDouble(args[4]),
+                            Longitude = Convert.ToDouble(args[5]),
+                        };
+                        Position upper = new Position
+                        {
+                            Latitude = Convert.ToDouble(args[6]),
+                            Longitude = Convert.ToDouble(args[7]),
+                        };
+                        CreateModel(args[0], path, p,lower, upper);
+
+                    }
                     else
                     {
                         CreateModel(args[0], path);
@@ -72,12 +94,27 @@ namespace CityGMLTest
         static void CreateModel(string path,string outputPath, Position origin)
         {
             var parser = new CityGMLParser();
+            origin = ParseFile(path, outputPath, origin, parser);
+
+        }
+        static void CreateModel(string path, string outputPath, Position origin, Position lower, Position upper)
+        {
+            var parser = new CityGMLParser();
+            parser.LowerCorner = lower;
+            parser.UpperCorner = upper;
+
+            origin = ParseFile(path, outputPath, origin, parser);
+
+        }
+
+        private static Position ParseFile(string path, string outputPath, Position origin, CityGMLParser parser)
+        {
             var coType = parser.GetCityObjectType(path);
-            if(coType == CityObjectType.Building)
+            if (coType == CityObjectType.Building)
             {
                 origin = CreateBuilding(path, outputPath, origin, parser);
             }
-            else if(coType == CityObjectType.Relief)
+            else if (coType == CityObjectType.Relief)
             {
                 origin = CreateRelief(path, outputPath, origin, parser);
             }
@@ -86,6 +123,7 @@ namespace CityGMLTest
                 Console.WriteLine("サポートしていない形式です。");
             }
 
+            return origin;
         }
 
         private static Position CreateBuilding(string path, string outputPath, Position origin, CityGMLParser parser)
@@ -116,9 +154,9 @@ namespace CityGMLTest
                     int triangles = b.LOD2Solid != null ? b.LOD2Solid.Length : b.LOD1Solid.Length;
                     Console.WriteLine($"{b.Id}\t{b.LowerCorner.Latitude:F8}\t{b.LowerCorner.Longitude:F8}\t{b.LowerCorner.Altitude}\t{triangles}\t{b.Name}");
                 }
-                catch
+                catch(Exception ex)
                 {
-
+                    Console.WriteLine(ex.Message);
                 }
 
             }
@@ -155,29 +193,11 @@ namespace CityGMLTest
                 int triangles = b.LOD1Solid.Length;
                 Console.WriteLine($"{b.Id}\t{b.LowerCorner.Latitude:F8}\t{b.LowerCorner.Longitude:F8}\t{b.LowerCorner.Altitude}\t{triangles}\t{b.Name}");
             }
-            catch
+            catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
 
-            //for (int i = 0; i < relief.Length; i++)
-            //{
-            //    try
-            //    {
-            //        Building b = relief[i];
-            //        ModelGenerator mg = new ModelGenerator(b, origin);
-            //        mg.SaveAsObj(Path.Combine(outputPath, b.Id + ".obj"));
-
-            //        // ステータス表示
-            //        int triangles = b.LOD2Solid != null ? b.LOD2Solid.Length : b.LOD1Solid.Length;
-            //        Console.WriteLine($"{b.Id}\t{b.LowerCorner.Latitude:F8}\t{b.LowerCorner.Longitude:F8}\t{b.LowerCorner.Altitude}\t{triangles}\t{b.Name}");
-            //    }
-            //    catch
-            //    {
-
-            //    }
-
-            //}
             return origin;
         }
     }
