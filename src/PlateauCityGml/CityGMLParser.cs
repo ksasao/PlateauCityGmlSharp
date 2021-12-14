@@ -41,8 +41,7 @@ namespace PlateauCityGml
             using (var fileStream = File.OpenText(gmlPath))
             using (XmlReader reader = XmlReader.Create(fileStream, settings))
             {
-                int count = 0;
-                while (reader.Read() && count++ < 100 && coType == CityObjectType.Undefined)
+                while (reader.Read() && coType == CityObjectType.Undefined)
                 {
                     switch (reader.NodeType)
                     {
@@ -251,22 +250,29 @@ namespace PlateauCityGml
             // LOD2が指定されていない場合は null
             if(surfaceDic != null)
             {
-                List<Surface> s = new List<Surface>();
+                List<Surface> sList = new List<Surface>();
                 foreach (var d in surfaceDic.Keys)
                 {
-                    if (surfaceDic[d] != null && surfaceDic[d].LowerCorner != Position.None)
+                    var s = surfaceDic[d];
+                    if (s != null && s.LowerCorner != Position.None)
                     {
-                        s.Add(surfaceDic[d]);
+                        sList.Add(s);
                     }
                 }
-                //var s = from c in surfaceDic
-                //        where c.Value.LowerCorner != null
-                //        select c.Value;
-
-                building.LOD2Solid = s.ToArray();
+                building.LOD2Solid = sList.ToArray();
                 (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-                building.LowerCorner = lower;
-                building.UpperCorner = upper;
+
+                // モデルの min側の角が領域内に入っていれば採用
+                if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
+                    && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
+                {
+                    building.LowerCorner = lower;
+                    building.UpperCorner = upper;
+                }
+                else
+                {
+                    building.LOD2Solid = new Surface[] { };
+                }
             }
             if(building.LOD1Solid != null && building.LOD2Solid == null)
             {
