@@ -15,6 +15,7 @@ G空間情報センターで提供されている .obj, .fbx 形式と比較し�
 ## ダウンロード
 
 - [v0.1](https://github.com/ksasao/PlateauCityGmlSharp/releases/download/v0.1/CityGMLToObj_v0.1.zip) (2021/10/31)
+- [v0.2](https://github.com/ksasao/PlateauCityGmlSharp/releases/download/v0.1/CityGMLToObj_v0.2.zip) (2021/12/14)
 
 ## 利用方法
 
